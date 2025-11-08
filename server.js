@@ -1,4 +1,3 @@
-// server/server.js
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
@@ -12,12 +11,24 @@ connectDB();
 
 const app = express();
 
-// --- Middlewares ---
+// ✅ Fix: Allow multiple origins dynamically
+const allowedOrigins = [
+  'https://software-project-light-eu92.vercel.app/',
+  'https://software-project-light.onrender.com',
+  'http://localhost:5173' // optional for local dev
+];
+
 app.use(cors({
-  origin: [
-    'https://software-project-lime.vercel.app/api', // your deployed frontend
-    'http://localhost:5173/api',
-  ] // Make sure this port is correct!
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
 }));
 
 // Increase the request body size limit
@@ -29,24 +40,14 @@ app.get('/api', (req, res) => {
   res.send('Hackathon 2026 API is running...');
 });
 
-// Auth Routes
 app.use('/api/auth', require('./routes/auth.routes'));
-// Payment Routes
 app.use('/api/payment', require('./routes/payment.routes'));
-// Question Routes (Admin)
 app.use('/api/questions', require('./routes/question.routes'));
-// Admin Routes (Dashboard, Team Mgmt, etc.)
 app.use('/api/admin', require('./routes/admin.routes'));
-// Dashboard Routes (Participant)
 app.use('/api/dashboard', require('./routes/dashboard.routes'));
-// Test Routes (Participant)
 app.use('/api/test', require('./routes/test.routes'));
-// Public Certificate Verification Route
 app.use('/api/verify', require('./routes/verify.routes.js'));
-
-// --- THIS IS THE MISSING ROUTE ---
 app.use('/api/certificate', require('./routes/certificate.routes.js'));
-// --- END OF FIX ---
 
 // --- Start Server ---
 const PORT = process.env.PORT || 5000;
